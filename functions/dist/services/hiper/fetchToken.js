@@ -14,7 +14,7 @@ const fetchToken = async () => {
         if (!tokenPromise) {
             tokenPromise = new Promise(async (resolve, reject) => {
                 try {
-                    const response = await axios_1.default.get("https://ms-ecommerce.hiper.com.br/api/v1/auth/gerar-token/10403c54fb456c6559b1f36ce3c9468bfcba012afc80ccb791d0144a3e917b3e");
+                    const response = await axios_1.default.get("https://ms-ecommerce.hiper.com.br/api/v1/auth/gerar-token/21f9820401efd62607d47a0152438ba907f5f732ea4a704e1348700b7b23d8a8");
                     token = response.data.token;
                     if (typeof token === "string") {
                         tokenCache_1.tokenCache.set("token", token);

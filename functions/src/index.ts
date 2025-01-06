@@ -7,20 +7,14 @@ const app = express();
 
 // Configuração específica do CORS para Firebase Functions
 const corsOptions = {
-  origin: [
-    "http://localhost:5173", // Seu ambiente de desenvolvimento
-    "http://localhost:3000",
-    "https://neres-bazar.web.app", // Seu domínio de produção
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  origin: "*",
+  // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  optionsSuccessStatus: 200,
 };
-
+console.log("Oi");
 // Aplicar CORS como middleware
-app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cors(corsOptions));
 
 // Middleware para logs
 app.use((req, res, next) => {
@@ -29,7 +23,7 @@ app.use((req, res, next) => {
 });
 
 // Adicionar headers CORS em todas as rotas
-app.use((req, res, next) => {
+/* app.use((req, res, next) => {
   res.set("Access-Control-Allow-Origin", corsOptions.origin);
   res.set("Access-Control-Allow-Methods", corsOptions.methods.join(","));
   res.set("Access-Control-Allow-Headers", corsOptions.allowedHeaders.join(","));
@@ -40,7 +34,7 @@ app.use((req, res, next) => {
     return;
   }
   next();
-});
+}); */
 
 app.get("/v1/products", getProducts);
 app.post("/v1/create-user", createUser);

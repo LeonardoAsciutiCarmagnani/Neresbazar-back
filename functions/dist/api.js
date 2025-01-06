@@ -11,6 +11,7 @@ const getProducts = async (req, res, next) => {
     try {
         // Obtemos a categoria da query string
         const { categoria } = req.query;
+        console.log("Categoria:", categoria);
         // Fazemos o fetch dos produtos a partir de uma função externa
         const getProductsHiper = await (0, fetchProducts_1.fetchProducts)();
         console.log("FetchProducts:", getProductsHiper);

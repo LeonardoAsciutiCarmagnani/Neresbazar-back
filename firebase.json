@@ -1,21 +1,24 @@
 {
-  "functions": [
-    {
-      "timeoutSeconds": 300,
-      "source": "functions",
-      "codebase": "default",
-      "runtime": "nodejs18",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint",
-        "npm --prefix \"$RESOURCE_DIR\" run build"
-      ]
+  "functions": {
+    "timeoutSeconds": 60,
+    "source": "functions",
+    "runtime": "nodejs18",
+    "codebase": "default",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "*.local"
+    ],
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run lint",
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ],
+    "v2": {
+      "api": {
+        "retry": false
+      }
     }
-  ]
+  }
 }

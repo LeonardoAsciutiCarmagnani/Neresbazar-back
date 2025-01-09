@@ -11,17 +11,17 @@ const getProducts = async (req, res, next) => {
     try {
         // Obtemos a categoria da query string
         const { categoria } = req.query;
-        console.log("Categoria:", categoria);
+        console.log("Categoria requisitada: ", categoria);
         // Fazemos o fetch dos produtos a partir de uma função externa
         const getProductsHiper = await (0, fetchProducts_1.fetchProducts)();
-        console.log("FetchProducts:", getProductsHiper);
         // Extraímos os produtos retornados pela API do Hiper
         const productsHiper = getProductsHiper === null || getProductsHiper === void 0 ? void 0 : getProductsHiper.produtos;
-        console.log("Produtos Hiper:", productsHiper);
+        console.log("Quantidade de produtos Hiper", productsHiper.length);
         // Verificamos se a categoria foi passada e filtramos os produtos
         const filteredProducts = categoria
             ? productsHiper.filter((product) => product.categoria === categoria)
             : productsHiper; // Caso não tenha categoria, retornamos todos os produtos
+        console.log("Quantidade de produtos filtrados:", filteredProducts.length);
         console.log("Produtos filtrados:", filteredProducts);
         // Retornamos os produtos filtrados para o front-end
         res.json({ filteredProducts });

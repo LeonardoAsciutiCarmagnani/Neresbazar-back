@@ -7,6 +7,7 @@ exports.tokenCache = exports.fetchToken = void 0;
 const axios_1 = __importDefault(require("axios"));
 const tokenCache_1 = require("../others/tokenCache");
 Object.defineProperty(exports, "tokenCache", { enumerable: true, get: function () { return tokenCache_1.tokenCache; } });
+const env_1 = __importDefault(require("../../config/env"));
 let tokenPromise = null;
 const fetchToken = async () => {
     let token = tokenCache_1.tokenCache.get("token");
@@ -14,7 +15,7 @@ const fetchToken = async () => {
         if (!tokenPromise) {
             tokenPromise = new Promise(async (resolve, reject) => {
                 try {
-                    const response = await axios_1.default.get("https://ms-ecommerce.hiper.com.br/api/v1/auth/gerar-token/21f9820401efd62607d47a0152438ba907f5f732ea4a704e1348700b7b23d8a8");
+                    const response = await axios_1.default.get(`${env_1.default.HIPER_API_URL}/auth/gerar-token/${env_1.default.API_SECRET_KEY}`);
                     token = response.data.token;
                     if (typeof token === "string") {
                         tokenCache_1.tokenCache.set("token", token);
@@ -22,11 +23,11 @@ const fetchToken = async () => {
                         resolve(token);
                     }
                     else {
-                        reject("Token gerado não é uma string válida.");
+                        reject(new Error("Token gerado não é uma string válida."));
                     }
                 }
                 catch (error) {
-                    reject("Erro ao gerar o token.");
+                    reject(new Error(`Erro ao gerar o token: ${error.message || error}`));
                 }
                 finally {
                     tokenPromise = null;

@@ -3,39 +3,48 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetchProducts = void 0;
+exports.productService = void 0;
 const axios_1 = __importDefault(require("axios"));
 const fetchToken_1 = require("./fetchToken");
-const fetchProducts = async (retries = 3 // Limite de tentativas para evitar recursão infinita
-) => {
-    var _a, _b;
-    try {
-        let token = await (0, fetchToken_1.fetchToken)();
-        const response = await axios_1.default.get("http://ms-ecommerce.hiper.com.br/api/v1/produtos/pontoDeSincronizacao?pontoDeSincronizacao=0", {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-            timeout: 10000,
-        });
-        return response.data;
+const env_1 = __importDefault(require("../../config/env"));
+// Constants
+const API_CONFIG = {
+    baseURL: env_1.default.HIPER_API_URL,
+    timeout: 10000,
+};
+class ProductService {
+    constructor() {
+        this.axiosInstance = axios_1.default.create(API_CONFIG);
+        this.setupInterceptors();
     }
-    catch (error) {
-        if (axios_1.default.isAxiosError(error)) {
-            // Trata erros de autenticação
-            if (((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 401 && retries > 0) {
-                console.warn("Token expirado. Tentando obter um novo token...");
-                const newToken = await (0, fetchToken_1.fetchToken)();
-                fetchToken_1.tokenCache.set("token", newToken);
-                return (0, exports.fetchProducts)(retries - 1); // Reduz o número de tentativas restantes
+    setupInterceptors() {
+        this.axiosInstance.interceptors.request.use(async (config) => {
+            const token = await (0, fetchToken_1.fetchToken)();
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        }, (error) => Promise.reject(error));
+    }
+    async fetchProducts(pontoDeSincronizacao = 0) {
+        var _a;
+        try {
+            const response = await this.axiosInstance.get(`/produtos/pontoDeSincronizacao`, {
+                params: { pontoDeSincronizacao },
+            });
+            return response.data;
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error)) {
+                console.error("Erro na requisição:", ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
             }
             else {
-                console.error("Erro de API Hiper:", ((_b = error.response) === null || _b === void 0 ? void 0 : _b.data) || error.message);
+                console.error("Erro inesperado:", error);
             }
+            return this.createErrorResponse(error);
         }
-        else {
-            console.error("Erro inesperado:", error);
-        }
-        // Retorna um objeto vazio em caso de falha (evita quebrar o fluxo no servidor)
+    }
+    createErrorResponse(error) {
         return {
             pontoDeSincronizacao: 0,
             produtos: [],
@@ -43,5 +52,6 @@ const fetchProducts = async (retries = 3 // Limite de tentativas para evitar rec
             message: "Erro ao buscar produtos",
         };
     }
-};
-exports.fetchProducts = fetchProducts;
+}
+// Export singleton instance
+exports.productService = new ProductService();

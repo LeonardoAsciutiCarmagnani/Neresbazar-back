@@ -1,47 +1,128 @@
-import express from "express";
+import express, { Application } from "express";
 import cors from "cors";
-import { createUser, getProducts } from "./api";
 import { onRequest } from "firebase-functions/v2/https";
+import {
+  ProductController,
+  UserController,
+  errorHandler,
+} from "./controllers/api";
+import helmet from "helmet";
+import morgan from "morgan";
+import env from "./config/env";
+import { Request } from "express";
+import rateLimit from "express-rate-limit";
 
-const app = express();
+class App {
+  private app: Application;
 
-// Configuração específica do CORS para Firebase Functions
-const corsOptions = {
-  origin: "*",
-  // methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-console.log("Oi");
-// Aplicar CORS como middleware
-app.use(express.json());
-app.use(cors(corsOptions));
-
-// Middleware para logs
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
-
-// Adicionar headers CORS em todas as rotas
-/* app.use((req, res, next) => {
-  res.set("Access-Control-Allow-Origin", corsOptions.origin);
-  res.set("Access-Control-Allow-Methods", corsOptions.methods.join(","));
-  res.set("Access-Control-Allow-Headers", corsOptions.allowedHeaders.join(","));
-  res.set("Access-Control-Allow-Credentials", "true");
-
-  if (req.method === "OPTIONS") {
-    res.status(200).send();
-    return;
+  constructor() {
+    this.app = express();
+    this.setupMiddlewares();
+    this.setupRoutes();
+    this.setupErrorHandling();
   }
-  next();
-}); */
 
-app.get("/v1/products", getProducts);
-app.post("/v1/create-user", createUser);
+  private setupMiddlewares(): void {
+    this.app.set("trust proxy", true);
+    // Security middlewares
+    this.app.use(helmet());
+    this.app.use(
+      cors({
+        origin: env.CORS_ORIGIN,
+        methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+      })
+    );
 
+    // Request parsing
+    this.app.use(express.json({ limit: "10kb" }));
+
+    // Rate limiting
+    const limiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // Limit each IP to 100 requests per windowMs
+      message: "Too many requests from this IP, please try again later",
+      keyGenerator: (req: Request): string => {
+        return req.ip || "unknown-ip";
+      },
+      validate: { ip: false },
+    });
+
+    this.app.use("/v1/", limiter);
+
+    // Logging
+    if (env.NODE_ENV === "development") {
+      this.app.use(morgan("dev"));
+    } else {
+      this.app.use(morgan("combined"));
+    }
+
+    // Custom request logger
+    this.app.use((req, res, next) => {
+      const timestamp = new Date().toISOString();
+      console.log(
+        `[${timestamp}] ${req.method} ${req.url} - IP: ${req.ip || "undefined"}`
+      );
+      next();
+    });
+  }
+
+  private setupRoutes(): void {
+    const router = express.Router();
+
+    // API routes
+    router.get("/products", ProductController.getProducts);
+    router.post("/create-user", UserController.createUser);
+    router.post("/password-recovery", UserController.recoverPassword);
+
+    // Health check route
+    router.get("/health", (_, res) => {
+      res
+        .status(200)
+        .json({ status: "ok", timestamp: new Date().toISOString() });
+    });
+
+    // Apply routes with version prefix
+    this.app.use("/v1", router);
+
+    // Handle 404
+    this.app.use((_, res) => {
+      res.status(404).json({
+        success: false,
+        message: "Route not found",
+      });
+    });
+  }
+
+  private setupErrorHandling(): void {
+    // Global error handler
+    this.app.use(errorHandler);
+
+    // Unhandled promise rejections
+    process.on("unhandledRejection", (reason: Error) => {
+      console.error("Unhandled Rejection:", reason);
+      // You might want to do some cleanup here
+    });
+
+    // Uncaught exceptions
+    process.on("uncaughtException", (error: Error) => {
+      console.error("Uncaught Exception:", error);
+      // You might want to do some cleanup here and exit gracefully
+      process.exit(1);
+    });
+  }
+
+  public getApp(): Application {
+    return this.app;
+  }
+}
+
+// Initialize app
+const application = new App();
+const app = application.getApp();
+
+// Export for Firebase Functions
 export const api = onRequest(app);
 
-console.log("API initialization started");
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection:", reason);
-});
+console.log(`Server started in ${env.NODE_ENV} mode`);

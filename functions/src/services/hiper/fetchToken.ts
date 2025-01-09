@@ -1,5 +1,6 @@
 import axios from "axios";
 import { tokenCache } from "../others/tokenCache";
+import env from "../../config/env";
 let tokenPromise: Promise<string> | null = null;
 
 export const fetchToken = async (): Promise<string> => {
@@ -10,7 +11,7 @@ export const fetchToken = async (): Promise<string> => {
       tokenPromise = new Promise(async (resolve, reject) => {
         try {
           const response = await axios.get(
-            "https://ms-ecommerce.hiper.com.br/api/v1/auth/gerar-token/21f9820401efd62607d47a0152438ba907f5f732ea4a704e1348700b7b23d8a8"
+            `${env.HIPER_API_URL}/auth/gerar-token/${env.API_SECRET_KEY}`
           );
 
           token = response.data.token;
@@ -19,10 +20,10 @@ export const fetchToken = async (): Promise<string> => {
             console.log("Novo token gerado e armazenado no cache.");
             resolve(token);
           } else {
-            reject("Token gerado não é uma string válida.");
+            reject(new Error("Token gerado não é uma string válida."));
           }
-        } catch (error) {
-          reject("Erro ao gerar o token.");
+        } catch (error: any) {
+          reject(new Error(`Erro ao gerar o token: ${error.message || error}`));
         } finally {
           tokenPromise = null;
         }

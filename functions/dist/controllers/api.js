@@ -10,6 +10,7 @@ const postUser_1 = __importDefault(require("../services/firebase/postUser"));
 const checkEmail_1 = require("../services/firebase/checkEmail");
 // Schemas
 const createUserSchema = zod_1.z.object({
+    user_id: zod_1.z.string(),
     name: zod_1.z.string().min(1, "Nome é obrigatório"),
     email: zod_1.z.string().email("Email inválido"),
     cpf: zod_1.z.string().min(11, "CPF inválido"),
@@ -48,8 +49,9 @@ class UserController {
     static async createUser(req, res, next) {
         try {
             const userData = createUserSchema.parse(req.body);
-            await (0, postUser_1.default)(userData);
-            console.log("Usuário criado com sucesso:", Object.assign(Object.assign({}, userData), { password: "[REDACTED]" }));
+            console.log("Dados do usuário a ser cadastrado: ", userData);
+            const result = await (0, postUser_1.default)(userData);
+            console.log("Usuário criado com sucesso:", Object.assign(Object.assign({}, result), { password: "[REDACTED]" }));
             res.status(201).json({
                 success: true,
                 message: "Usuário criado com sucesso",
@@ -69,6 +71,10 @@ class UserController {
                 return;
             }
             console.error("Erro ao criar usuário:", error);
+            res.status(500).json({
+                success: false,
+                message: "Erro interno do servidor",
+            });
             next(error);
         }
     }

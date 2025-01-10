@@ -11,6 +11,7 @@ interface ProductQuery {
 
 // Schemas
 const createUserSchema = z.object({
+  user_id: z.string(),
   name: z.string().min(1, "Nome é obrigatório"),
   email: z.string().email("Email inválido"),
   cpf: z.string().min(11, "CPF inválido"),
@@ -64,10 +65,12 @@ export class UserController {
     try {
       const userData = createUserSchema.parse(req.body);
 
-      await postUser(userData);
+      console.log("Dados do usuário a ser cadastrado: ", userData);
+
+      const result = await postUser(userData);
 
       console.log("Usuário criado com sucesso:", {
-        ...userData,
+        ...result,
         password: "[REDACTED]",
       });
 
@@ -90,6 +93,10 @@ export class UserController {
       }
 
       console.error("Erro ao criar usuário:", error);
+      res.status(500).json({
+        success: false,
+        message: "Erro interno do servidor",
+      });
       next(error);
     }
   }

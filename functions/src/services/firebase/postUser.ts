@@ -1,41 +1,36 @@
-import { admin, firestore } from "../../firebaseConfig";
+import { firestore } from "../../firebaseConfig";
 
-const auth = admin.auth();
-
-async function checkCpfExists(cpf: number): Promise<boolean> {
-  const usersRef = firestore.collection("clients");
-  const querySnapshot = await usersRef.where("cpf", "==", cpf).get();
-
-  return !querySnapshot.empty;
+// Interface para tipagem dos dados do usuário
+interface User {
+  user_id: string;
+  cpf: string;
+  email: string;
+  name: string;
+  password?: string;
 }
 
-const postUser = async (user: any) => {
+const saveUserToFirestore = async (user: User) => {
   try {
-    // Verifica se o usuário já existe
-    const userExists = await checkCpfExists(user.cpf);
+    const usersRef = firestore.collection("clients");
+    const userRef = usersRef.doc(user.user_id);
 
-    if (userExists) {
-      return { success: false, message: "Usuário já cadastrado." };
-    }
+    const userToSave = { ...user };
+    delete userToSave.password;
 
-    // Cria o usuário na autenticação do Firebase
-    const userCredential = await auth.createUser({
-      email: user.email,
-      password: user.password,
-    });
+    await userRef.set(userToSave);
 
-    // Adiciona o user_id ao objeto user
-    user.user_id = userCredential.uid;
-
-    // Armazena os dados do usuário no Firestore
-    const userRef = firestore.collection("clients").doc(user.user_id);
-    await userRef.set(user);
-
-    return { success: true, message: "Usuário criado com sucesso." };
-  } catch (error) {
-    console.error("Erro ao criar usuário:", error);
-    return { success: false, message: "Erro ao criar usuário." };
+    return {
+      success: true,
+      message: "Usuário criado no firebase com sucesso.",
+      userId: userRef.id,
+    };
+  } catch (error: any) {
+    console.error("Erro ao salvar usuário:", error);
+    return {
+      success: false,
+      message: error.message || "Erro ao salvar usuário.",
+    };
   }
 };
 
-export default postUser;
+export default saveUserToFirestore;

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { productService } from "../services/hiper/fetchProducts";
 import postUser from "../services/firebase/postUser";
-import { passwordRecovery } from "../services/firebase/passwordRecovery";
+import { checkEmailExists } from "../services/firebase/checkEmail";
 
 // Types
 interface ProductQuery {
@@ -94,31 +94,29 @@ export class UserController {
     }
   }
 
-  public static async recoverPassword(
+  public static async checkEmail(
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> {
     try {
       // Validação do email
-      const recoverPasswordSchema = z.object({
+      const emailSchema = z.object({
         email: z.string().email("Email inválido"),
       });
-      const { email } = recoverPasswordSchema.parse(req.body);
+      const { email } = emailSchema.parse(req.body);
 
-      const recovery = await passwordRecovery(email);
+      const emailExists = await checkEmailExists(email);
 
-      if (recovery.success) {
+      if (emailExists.success) {
         res.status(200).json({
           success: true,
-          message: "Instruções de recuperação de senha enviadas para o email.",
-          link: recovery.link,
+          message: "E-mail encontrado com sucesso",
         });
       } else {
         res.status(400).json({
           success: false,
-          message: "Email nao encontrado",
-          link: null,
+          message: "E-mail não encontrado",
         });
       }
     } catch (error: any) {

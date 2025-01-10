@@ -61,7 +61,7 @@ class App {
         // API routes
         router.get("/products", api_1.ProductController.getProducts);
         router.post("/create-user", api_1.UserController.createUser);
-        router.post("/password-recovery", api_1.UserController.recoverPassword);
+        router.post("/check-email", api_1.UserController.checkEmail);
         // Health check route
         router.get("/health", (_, res) => {
             res

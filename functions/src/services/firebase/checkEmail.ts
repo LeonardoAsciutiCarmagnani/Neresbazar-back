@@ -2,20 +2,15 @@ import { getAuth, FirebaseAuthError } from "firebase-admin/auth";
 
 const auth = getAuth();
 
-export const passwordRecovery = async (email: string) => {
+export const checkEmailExists = async (email: string) => {
   try {
     if (!email) {
       return { success: false, message: "O email é obrigatório" };
     }
 
     // Verificar se o usuário existe, usando getUserByEmail()
-    const user = await auth.getUserByEmail(email);
-
-    const link = await auth.generatePasswordResetLink(email);
-
-    console.log("Link de redefinição de senha:", link);
-
-    return { success: true, message: "Email enviado com sucesso!", link };
+    await auth.getUserByEmail(email);
+    return { success: true, message: "Email enviado com sucesso!" };
   } catch (error) {
     // Lidar com erros
     if (error instanceof FirebaseAuthError) {

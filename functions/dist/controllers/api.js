@@ -7,7 +7,7 @@ exports.errorHandler = exports.UserController = exports.ProductController = void
 const zod_1 = require("zod");
 const fetchProducts_1 = require("../services/hiper/fetchProducts");
 const postUser_1 = __importDefault(require("../services/firebase/postUser"));
-const passwordRecovery_1 = require("../services/firebase/passwordRecovery");
+const checkEmail_1 = require("../services/firebase/checkEmail");
 // Schemas
 const createUserSchema = zod_1.z.object({
     name: zod_1.z.string().min(1, "Nome é obrigatório"),
@@ -72,26 +72,24 @@ class UserController {
             next(error);
         }
     }
-    static async recoverPassword(req, res, next) {
+    static async checkEmail(req, res, next) {
         try {
             // Validação do email
-            const recoverPasswordSchema = zod_1.z.object({
+            const emailSchema = zod_1.z.object({
                 email: zod_1.z.string().email("Email inválido"),
             });
-            const { email } = recoverPasswordSchema.parse(req.body);
-            const recovery = await (0, passwordRecovery_1.passwordRecovery)(email);
-            if (recovery.success) {
+            const { email } = emailSchema.parse(req.body);
+            const emailExists = await (0, checkEmail_1.checkEmailExists)(email);
+            if (emailExists.success) {
                 res.status(200).json({
                     success: true,
-                    message: "Instruções de recuperação de senha enviadas para o email.",
-                    link: recovery.link,
+                    message: "E-mail encontrado com sucesso",
                 });
             }
             else {
                 res.status(400).json({
                     success: false,
-                    message: "Email nao encontrado",
-                    link: null,
+                    message: "E-mail não encontrado",
                 });
             }
         }

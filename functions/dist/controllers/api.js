@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.errorHandler = exports.OrderController = exports.UserController = exports.ProductController = void 0;
+exports.errorHandler = exports.validateCEP = exports.CEPController = exports.OrderController = exports.UserController = exports.ProductController = void 0;
 const zod_1 = require("zod");
 const fetchProducts_1 = require("../services/hiper/fetchProducts");
 const postUser_1 = __importDefault(require("../services/firebase/postUser"));
 const checkEmail_1 = require("../services/firebase/checkEmail");
+const fetchCEP_1 = __importDefault(require("../services/others/fetchCEP"));
 // Schemas
 const createUserSchema = zod_1.z.object({
     user_id: zod_1.z.string(),
@@ -18,6 +19,11 @@ const createUserSchema = zod_1.z.object({
     CEP: zod_1.z.string().min(8, "CEP inválido"),
     numberHouse: zod_1.z.string().min(1, "Número da casa inválido"),
     phoneNumber: zod_1.z.string().min(11, "Telefone inválido"),
+    IBGE: zod_1.z.string().min(7, "Código IBGE inválido"),
+    bairro: zod_1.z.string().min(1, "Bairro inválido"),
+    localidade: zod_1.z.string().min(1, "Cidade inválida"),
+    logradouro: zod_1.z.string().min(1, "Logradouro inválido"),
+    uf: zod_1.z.string().min(1, "UF inválida"),
     type_user: zod_1.z.string().min(1, "Tipo de usuário é obrigatório"),
 });
 // Controllers
@@ -148,6 +154,57 @@ class OrderController {
     }
 }
 exports.OrderController = OrderController;
+class CEPController {
+    static async getCEP(req, res, next) {
+        const { cep } = req.body;
+        console.log("Body recebido:", req.body);
+        if (!cep) {
+            return res.status(400).json({ error: "CEP é obrigatório." });
+        }
+        try {
+            console.log("CEP que será buscado: ", cep);
+            const resultCEP = await (0, fetchCEP_1.default)(cep);
+            console.log("Resultado ViaCEP: ", resultCEP);
+            if (resultCEP === null) {
+                return res
+                    .status(404)
+                    .json({ success: false, message: "CEP não encontrado." });
+            }
+            res.status(201).json({
+                success: true,
+                message: "CEP encontrado com sucesso",
+                dataAddress: resultCEP,
+            });
+        }
+        catch (error) {
+            res.status(400).json({
+                success: false,
+                message: "Erro ao buscar CEP",
+                dataAddress: null,
+            });
+            next(error);
+        }
+    }
+}
+exports.CEPController = CEPController;
+const validateCEP = async (req, res, next) => {
+    const { cep } = req.body;
+    if (!cep) {
+        return res.status(400).json({ error: "CEP é obrigatório." });
+    }
+    try {
+        const data = await (0, fetchCEP_1.default)(cep);
+        if (!data) {
+            return res.status(404).json({ error: "CEP não encontrado." });
+        }
+        return res.status(200).json(data);
+    }
+    catch (error) {
+        console.error("Erro ao validar o CEP:", error);
+        return res.status(500).json({ error: "Erro interno do servidor." });
+    }
+};
+exports.validateCEP = validateCEP;
 // Error Handler Middleware
 const errorHandler = (err, req, res, next) => {
     console.error("Error Handler:", err);

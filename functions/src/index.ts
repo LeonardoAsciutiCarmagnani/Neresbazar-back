@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import cors from "cors";
 import { onRequest } from "firebase-functions/v2/https";
 import {
+  CEPController,
   OrderController,
   ProductController,
   UserController,
@@ -77,6 +78,7 @@ class App {
     router.post("/create-user", UserController.createUser);
     router.post("/check-email", UserController.checkEmail);
     router.post("/post-order", OrderController.postOrderSale);
+    router.post("/find-CEP", CEPController.getCEP);
 
     // Health check route
     router.get("/health", (_, res) => {

@@ -4,6 +4,7 @@ import { productService } from "../services/hiper/fetchProducts";
 import postUser from "../services/firebase/postUser";
 import { checkEmailExists } from "../services/firebase/checkEmail";
 import postOrder from "../services/hiper/postOrder";
+import fetchCEP from "../services/others/fetchCEP";
 
 // Types
 interface ProductQuery {
@@ -20,6 +21,11 @@ const createUserSchema = z.object({
   CEP: z.string().min(8, "CEP inválido"),
   numberHouse: z.string().min(1, "Número da casa inválido"),
   phoneNumber: z.string().min(11, "Telefone inválido"),
+  IBGE: z.string().min(7, "Código IBGE inválido"),
+  bairro: z.string().min(1, "Bairro inválido"),
+  localidade: z.string().min(1, "Cidade inválida"),
+  logradouro: z.string().min(1, "Logradouro inválido"),
+  uf: z.string().min(1, "UF inválida"),
   type_user: z.string().min(1, "Tipo de usuário é obrigatório"),
 });
 
@@ -169,7 +175,7 @@ export class OrderController {
 
       // console.log(result);
 
-      res.status(200).json({
+      res.status(201).json({
         success: true,
         message: "Venda enviada com sucesso",
       });
@@ -183,6 +189,68 @@ export class OrderController {
     }
   }
 }
+
+export class CEPController {
+  public static async getCEP(req: Request, res: Response, next: NextFunction) {
+    const { cep } = req.body;
+    console.log("Body recebido:", req.body);
+    if (!cep) {
+      return res.status(400).json({ error: "CEP é obrigatório." });
+    }
+
+    try {
+      console.log("CEP que será buscado: ", cep);
+      const resultCEP = await fetchCEP(cep);
+      console.log("Resultado ViaCEP: ", resultCEP);
+
+      if (resultCEP === null) {
+        return res
+          .status(404)
+          .json({ success: false, message: "CEP não encontrado." });
+      }
+
+      res.status(201).json({
+        success: true,
+        message: "CEP encontrado com sucesso",
+        dataAddress: resultCEP,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: "Erro ao buscar CEP",
+        dataAddress: null,
+      });
+
+      next(error);
+    }
+  }
+}
+
+export const validateCEP = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { cep } = req.body;
+
+  if (!cep) {
+    return res.status(400).json({ error: "CEP é obrigatório." });
+  }
+
+  try {
+    const data = await fetchCEP(cep);
+
+    if (!data) {
+      return res.status(404).json({ error: "CEP não encontrado." });
+    }
+
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Erro ao validar o CEP:", error);
+    return res.status(500).json({ error: "Erro interno do servidor." });
+  }
+};
+
 // Error Handler Middleware
 export const errorHandler = (
   err: Error,

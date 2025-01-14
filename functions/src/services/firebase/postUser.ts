@@ -7,6 +7,7 @@ interface User {
   email: string;
   name: string;
   password?: string;
+  type_user: string;
 }
 
 const saveUserToFirestore = async (user: User) => {
@@ -15,6 +16,7 @@ const saveUserToFirestore = async (user: User) => {
     const userRef = usersRef.doc(user.user_id);
 
     const userToSave = { ...user };
+
     delete userToSave.password;
 
     await userRef.set(userToSave);

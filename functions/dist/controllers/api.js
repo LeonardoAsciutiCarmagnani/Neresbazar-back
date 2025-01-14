@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.errorHandler = exports.UserController = exports.ProductController = void 0;
+exports.errorHandler = exports.OrderController = exports.UserController = exports.ProductController = void 0;
 const zod_1 = require("zod");
 const fetchProducts_1 = require("../services/hiper/fetchProducts");
 const postUser_1 = __importDefault(require("../services/firebase/postUser"));
@@ -15,6 +15,10 @@ const createUserSchema = zod_1.z.object({
     email: zod_1.z.string().email("Email inválido"),
     cpf: zod_1.z.string().min(11, "CPF inválido"),
     password: zod_1.z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+    CEP: zod_1.z.string().min(8, "CEP inválido"),
+    numberHouse: zod_1.z.string().min(1, "Número da casa inválido"),
+    phoneNumber: zod_1.z.string().min(11, "Telefone inválido"),
+    type_user: zod_1.z.string().min(1, "Tipo de usuário é obrigatório"),
 });
 // Controllers
 class ProductController {
@@ -121,6 +125,29 @@ class UserController {
     }
 }
 exports.UserController = UserController;
+class OrderController {
+    static async postOrderSale(req, res, next) {
+        try {
+            const orderData = req.body;
+            const userId = orderData.id_user;
+            console.log("Venda que será enviada ao Hiper: ", orderData);
+            // const result = await postOrder(orderData, userId);
+            // console.log(result);
+            res.status(201).json({
+                success: true,
+                message: "Venda enviada com sucesso",
+            });
+        }
+        catch (error) {
+            res.status(400).json({
+                success: false,
+                message: "Erro ao enviar venda",
+            });
+            next(error);
+        }
+    }
+}
+exports.OrderController = OrderController;
 // Error Handler Middleware
 const errorHandler = (err, req, res, next) => {
     console.error("Error Handler:", err);

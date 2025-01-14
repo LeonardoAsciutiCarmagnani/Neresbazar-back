@@ -3,6 +3,7 @@ import { z } from "zod";
 import { productService } from "../services/hiper/fetchProducts";
 import postUser from "../services/firebase/postUser";
 import { checkEmailExists } from "../services/firebase/checkEmail";
+import postOrder from "../services/hiper/postOrder";
 
 // Types
 interface ProductQuery {
@@ -16,6 +17,10 @@ const createUserSchema = z.object({
   email: z.string().email("Email inválido"),
   cpf: z.string().min(11, "CPF inválido"),
   password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+  CEP: z.string().min(8, "CEP inválido"),
+  numberHouse: z.string().min(1, "Número da casa inválido"),
+  phoneNumber: z.string().min(11, "Telefone inválido"),
+  type_user: z.string().min(1, "Tipo de usuário é obrigatório"),
 });
 
 // Controllers
@@ -144,6 +149,37 @@ export class UserController {
 
       console.error("Erro ao recuperar senha:", error);
       next(error); // Passar o erro para o errorHandler
+    }
+  }
+}
+
+export class OrderController {
+  public static async postOrderSale(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const orderData = req.body;
+      const userId = orderData.id_user;
+
+      console.log("Venda que será enviada ao Hiper: ", orderData);
+
+      // const result = await postOrder(orderData, userId);
+
+      // console.log(result);
+
+      res.status(200).json({
+        success: true,
+        message: "Venda enviada com sucesso",
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: "Erro ao enviar venda",
+      });
+
+      next(error);
     }
   }
 }

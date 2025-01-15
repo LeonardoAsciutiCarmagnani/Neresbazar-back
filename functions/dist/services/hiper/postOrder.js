@@ -26,7 +26,7 @@ const getLastOrderCode = async () => {
     return nextOrderCode;
 };
 const storeOrderInFirestore = async (order, codeHiper, userId) => {
-    const orderWithClientId = Object.assign(Object.assign({}, order), { IdClient: userId, order_code: codeHiper });
+    const orderWithClientId = Object.assign(Object.assign({}, order), { IdClient: userId, order_code: codeHiper, status_order: 1 });
     const docRef = firebaseConfig_1.firestore.collection("sales_orders").doc(order.id);
     await docRef.set(orderWithClientId);
 };
@@ -54,11 +54,47 @@ const fetchOrderSaleData = async (generatedId) => {
 };
 const postOrderSale = async (orderData, userId) => {
     let token = await (0, fetchToken_1.fetchToken)();
-    console.log("OrderData: ", orderData);
+    const { cliente, enderecoDeCobranca, enderecoDeEntrega, itens, meiosDePagamento, numeroPedidoDeVenda, observacaoDoPedidoDeVenda, valorDoFrete, } = orderData;
+    const adjustedItens = itens.map((item) => ({
+        produtoId: item.produtoId,
+        quantidade: item.quantidade,
+        precoUnitarioBruto: item.precoUnitarioBruto,
+        precoUnitarioLiquido: item.precoUnitarioLiquido,
+    }));
+    const dataForHiper = {
+        cliente: {
+            documento: cliente.documento,
+            email: cliente.email,
+            inscricaoEstadual: cliente.inscricaoEstadual || "",
+            nomeDoCliente: cliente.nomeDoCliente,
+            nomeFantasia: cliente.nomeFantasia || "",
+        },
+        enderecoDeCobranca: {
+            bairro: enderecoDeCobranca.bairro,
+            cep: enderecoDeCobranca.cep,
+            codigoIbge: enderecoDeCobranca.codigoIbge,
+            complemento: enderecoDeCobranca.complemento || "",
+            logradouro: enderecoDeCobranca.logradouro,
+            numero: enderecoDeCobranca.numero,
+        },
+        enderecoDeEntrega: {
+            bairro: enderecoDeEntrega.bairro,
+            cep: enderecoDeEntrega.cep,
+            codigoIbge: enderecoDeEntrega.codigoIbge,
+            complemento: enderecoDeEntrega.complemento || "",
+            logradouro: enderecoDeEntrega.logradouro,
+            numero: enderecoDeEntrega.numero,
+        },
+        itens: adjustedItens,
+        meiosDePagamento,
+        numeroPedidoDeVenda: numeroPedidoDeVenda || "",
+        observacaoDoPedidoDeVenda: observacaoDoPedidoDeVenda || "",
+        valorDoFrete: valorDoFrete || 0,
+    };
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     try {
         console.log("tentando enviar os dados para a hiper");
-        const response = await axios_1.default.post("http://ms-ecommerce.hiper.com.br/api/v1/pedido-de-venda/", orderData, {
+        const response = await axios_1.default.post("http://ms-ecommerce.hiper.com.br/api/v1/pedido-de-venda/", dataForHiper, {
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",

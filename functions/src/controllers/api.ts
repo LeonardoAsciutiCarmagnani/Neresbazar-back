@@ -162,8 +162,9 @@ export class UserController {
   }
 }
 
-interface OrderData {
+export interface OrderData {
   IdClient: string;
+  created_at: string;
   cliente: {
     documento: string;
     email: string;
@@ -218,58 +219,9 @@ export class OrderController {
       const userId = orderData.IdClient;
       console.log("Valor em userId: ", userId);
 
-      const {
-        cliente,
-        enderecoDeCobranca,
-        enderecoDeEntrega,
-        itens,
-        meiosDePagamento,
-        numeroPedidoDeVenda,
-        observacaoDoPedidoDeVenda,
-        valorDoFrete,
-      } = orderData;
+      // console.log("Venda que será enviada ao Hiper: ", dataForHiper);
 
-      const adjustedItens = itens.map((item) => ({
-        produtoId: item.produtoId,
-        quantidade: item.quantidade,
-        precoUnitarioBruto: item.precoUnitarioBruto,
-        precoUnitarioLiquido: item.precoUnitarioLiquido,
-      }));
-
-      const dataForHiper = {
-        cliente: {
-          documento: cliente.documento,
-          email: cliente.email,
-          inscricaoEstadual: cliente.inscricaoEstadual || "",
-          nomeDoCliente: cliente.nomeDoCliente,
-          nomeFantasia: cliente.nomeFantasia || "",
-        },
-        enderecoDeCobranca: {
-          bairro: enderecoDeCobranca.bairro,
-          cep: enderecoDeCobranca.cep,
-          codigoIbge: enderecoDeCobranca.codigoIbge,
-          complemento: enderecoDeCobranca.complemento || "",
-          logradouro: enderecoDeCobranca.logradouro,
-          numero: enderecoDeCobranca.numero,
-        },
-        enderecoDeEntrega: {
-          bairro: enderecoDeEntrega.bairro,
-          cep: enderecoDeEntrega.cep,
-          codigoIbge: enderecoDeEntrega.codigoIbge,
-          complemento: enderecoDeEntrega.complemento || "",
-          logradouro: enderecoDeEntrega.logradouro,
-          numero: enderecoDeEntrega.numero,
-        },
-        itens: adjustedItens,
-        meiosDePagamento,
-        numeroPedidoDeVenda: numeroPedidoDeVenda || "",
-        observacaoDoPedidoDeVenda: observacaoDoPedidoDeVenda || "",
-        valorDoFrete: valorDoFrete || 0,
-      };
-
-      console.log("Venda que será enviada ao Hiper: ", dataForHiper);
-
-      const result = await postOrder(dataForHiper, userId);
+      const result = await postOrder(orderData, userId);
 
       console.log("result: ", result);
 

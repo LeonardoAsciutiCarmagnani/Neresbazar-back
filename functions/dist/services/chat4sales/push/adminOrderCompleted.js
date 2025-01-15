@@ -12,7 +12,7 @@ const fetchAdminOrderCompleted = async (props) => {
         return response;
     }
     catch (error) {
-        console.error("Erro ao buscar o CEP:", error);
+        console.error("Erro ao enviar push:", error);
         return null;
     }
 };

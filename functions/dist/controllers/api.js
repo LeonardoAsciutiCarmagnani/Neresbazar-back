@@ -11,6 +11,8 @@ const checkEmail_1 = require("../services/firebase/checkEmail");
 const postOrder_1 = __importDefault(require("../services/hiper/postOrder"));
 const fetchCEP_1 = __importDefault(require("../services/others/fetchCEP"));
 const adminOrderCompleted_1 = __importDefault(require("../services/chat4sales/push/adminOrderCompleted"));
+const paymentLinkAdded_1 = __importDefault(require("../services/chat4sales/push/paymentLinkAdded"));
+const orderCompleted_1 = __importDefault(require("../services/chat4sales/push/orderCompleted"));
 // Schemas
 const createUserSchema = zod_1.z.object({
     user_id: zod_1.z.string(),
@@ -27,11 +29,6 @@ const createUserSchema = zod_1.z.object({
     logradouro: zod_1.z.string().min(1, "Logradouro inválido"),
     uf: zod_1.z.string().min(1, "UF inválida"),
     type_user: zod_1.z.string().min(1, "Tipo de usuário é obrigatório"),
-});
-const adminOrderPushSchema = zod_1.z.object({
-    orderCode: zod_1.z.string(),
-    phoneNumber: zod_1.z.number(),
-    totalValue: zod_1.z.number(),
 });
 // Controllers
 class ProductController {
@@ -144,45 +141,8 @@ class OrderController {
             const orderData = req.body;
             const userId = orderData.IdClient;
             console.log("Valor em userId: ", userId);
-            const { cliente, enderecoDeCobranca, enderecoDeEntrega, itens, meiosDePagamento, numeroPedidoDeVenda, observacaoDoPedidoDeVenda, valorDoFrete, } = orderData;
-            const adjustedItens = itens.map((item) => ({
-                produtoId: item.produtoId,
-                quantidade: item.quantidade,
-                precoUnitarioBruto: item.precoUnitarioBruto,
-                precoUnitarioLiquido: item.precoUnitarioLiquido,
-            }));
-            const dataForHiper = {
-                cliente: {
-                    documento: cliente.documento,
-                    email: cliente.email,
-                    inscricaoEstadual: cliente.inscricaoEstadual || "",
-                    nomeDoCliente: cliente.nomeDoCliente,
-                    nomeFantasia: cliente.nomeFantasia || "",
-                },
-                enderecoDeCobranca: {
-                    bairro: enderecoDeCobranca.bairro,
-                    cep: enderecoDeCobranca.cep,
-                    codigoIbge: enderecoDeCobranca.codigoIbge,
-                    complemento: enderecoDeCobranca.complemento || "",
-                    logradouro: enderecoDeCobranca.logradouro,
-                    numero: enderecoDeCobranca.numero,
-                },
-                enderecoDeEntrega: {
-                    bairro: enderecoDeEntrega.bairro,
-                    cep: enderecoDeEntrega.cep,
-                    codigoIbge: enderecoDeEntrega.codigoIbge,
-                    complemento: enderecoDeEntrega.complemento || "",
-                    logradouro: enderecoDeEntrega.logradouro,
-                    numero: enderecoDeEntrega.numero,
-                },
-                itens: adjustedItens,
-                meiosDePagamento,
-                numeroPedidoDeVenda: numeroPedidoDeVenda || "",
-                observacaoDoPedidoDeVenda: observacaoDoPedidoDeVenda || "",
-                valorDoFrete: valorDoFrete || 0,
-            };
-            console.log("Venda que será enviada ao Hiper: ", dataForHiper);
-            const result = await (0, postOrder_1.default)(dataForHiper, userId);
+            // console.log("Venda que será enviada ao Hiper: ", dataForHiper);
+            const result = await (0, postOrder_1.default)(orderData, userId);
             console.log("result: ", result);
             res.status(201).json({
                 success: true,
@@ -253,12 +213,58 @@ class PushController {
         const body = req.body;
         console.log("Body recebido:", req.body);
         if (!body) {
+            return res.status(400).json({ error: "Corpo da requisição inválido" });
+        }
+        try {
+            const resultPush = await (0, adminOrderCompleted_1.default)(body);
+            console.log("Resultado retornado após envio do push: ", resultPush === null || resultPush === void 0 ? void 0 : resultPush.data);
+            res.status(201).json({
+                success: true,
+                message: "Push enviado com sucesso",
+            });
+        }
+        catch (error) {
+            res.status(400).json({
+                success: false,
+                message: "Erro ao enviar push",
+            });
+            next(error);
+        }
+    }
+    static async postOrderCompleted(req, res, next) {
+        const body = req.body;
+        console.log("Body recebido:", req.body);
+        if (!body) {
             return res
                 .status(400)
                 .json({ error: "Corpo da requisição é obrigatório" });
         }
         try {
-            const resultPush = await (0, adminOrderCompleted_1.default)(body);
+            const resultPush = await (0, orderCompleted_1.default)(body);
+            console.log("Resultado retornado após envio do push: ", resultPush);
+            res.status(201).json({
+                success: true,
+                message: "Push enviado com sucesso",
+            });
+        }
+        catch (error) {
+            res.status(400).json({
+                success: false,
+                message: "Erro ao enviar push",
+            });
+            next(error);
+        }
+    }
+    static async postPaymentLinkAdded(req, res, next) {
+        const body = req.body;
+        console.log("Body recebido:", req.body);
+        if (!body) {
+            return res
+                .status(400)
+                .json({ error: "Corpo da requisição é obrigatório" });
+        }
+        try {
+            const resultPush = await (0, paymentLinkAdded_1.default)(body);
             console.log("Resultado retornado após envio do push: ", resultPush);
             res.status(201).json({
                 success: true,

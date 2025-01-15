@@ -1,6 +1,7 @@
 import axios from "axios";
 import { firestore } from "../../firebaseConfig";
 import { fetchToken } from "./fetchToken";
+import { OrderData } from "../../controllers/api";
 
 const getLastOrderCode = async () => {
   const collectionRef = firestore.collection("sales_orders");
@@ -36,6 +37,7 @@ const storeOrderInFirestore = async (
     ...order,
     IdClient: userId,
     order_code: codeHiper,
+    status_order: 1,
   };
 
   const docRef = firestore.collection("sales_orders").doc(order.id);
@@ -66,10 +68,60 @@ const fetchOrderSaleData = async (generatedId: string) => {
   }
 };
 
-const postOrderSale = async (orderData: any, userId: string): Promise<any> => {
+const postOrderSale = async (
+  orderData: OrderData,
+  userId: string
+): Promise<any> => {
   let token = await fetchToken();
 
-  console.log("OrderData: ", orderData);
+  const {
+    cliente,
+    enderecoDeCobranca,
+    enderecoDeEntrega,
+    itens,
+    meiosDePagamento,
+    numeroPedidoDeVenda,
+    observacaoDoPedidoDeVenda,
+    valorDoFrete,
+  } = orderData;
+
+  const adjustedItens = itens.map((item) => ({
+    produtoId: item.produtoId,
+    quantidade: item.quantidade,
+    precoUnitarioBruto: item.precoUnitarioBruto,
+    precoUnitarioLiquido: item.precoUnitarioLiquido,
+  }));
+
+  const dataForHiper = {
+    cliente: {
+      documento: cliente.documento,
+      email: cliente.email,
+      inscricaoEstadual: cliente.inscricaoEstadual || "",
+      nomeDoCliente: cliente.nomeDoCliente,
+      nomeFantasia: cliente.nomeFantasia || "",
+    },
+    enderecoDeCobranca: {
+      bairro: enderecoDeCobranca.bairro,
+      cep: enderecoDeCobranca.cep,
+      codigoIbge: enderecoDeCobranca.codigoIbge,
+      complemento: enderecoDeCobranca.complemento || "",
+      logradouro: enderecoDeCobranca.logradouro,
+      numero: enderecoDeCobranca.numero,
+    },
+    enderecoDeEntrega: {
+      bairro: enderecoDeEntrega.bairro,
+      cep: enderecoDeEntrega.cep,
+      codigoIbge: enderecoDeEntrega.codigoIbge,
+      complemento: enderecoDeEntrega.complemento || "",
+      logradouro: enderecoDeEntrega.logradouro,
+      numero: enderecoDeEntrega.numero,
+    },
+    itens: adjustedItens,
+    meiosDePagamento,
+    numeroPedidoDeVenda: numeroPedidoDeVenda || "",
+    observacaoDoPedidoDeVenda: observacaoDoPedidoDeVenda || "",
+    valorDoFrete: valorDoFrete || 0,
+  };
 
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
@@ -77,7 +129,7 @@ const postOrderSale = async (orderData: any, userId: string): Promise<any> => {
     console.log("tentando enviar os dados para a hiper");
     const response = await axios.post(
       "http://ms-ecommerce.hiper.com.br/api/v1/pedido-de-venda/",
-      orderData,
+      dataForHiper,
       {
         headers: {
           Authorization: `Bearer ${token}`,

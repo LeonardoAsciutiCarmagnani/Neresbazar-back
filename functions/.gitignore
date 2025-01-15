@@ -4,7 +4,9 @@ lib/**/*.js.map
 
 # TypeScript v1 declaration files
 typings/
-functions/src/credentials.json
+src/credentials.json
+
+credentials.jsonfe
 
 # Node.js dependency directory
 node_modules/

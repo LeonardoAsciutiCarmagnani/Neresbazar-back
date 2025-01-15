@@ -2,6 +2,8 @@
 lib/**/*.js
 lib/**/*.js.map
 
+dist/** 
+
 # TypeScript v1 declaration files
 typings/
 src/credentials.json

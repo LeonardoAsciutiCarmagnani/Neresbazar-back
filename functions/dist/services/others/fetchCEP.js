@@ -6,8 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const fetchCEP = async (cep) => {
     try {
+<<<<<<< HEAD
         console.log(`Buscando CEP: ${cep}`);
+=======
+        console.log("Iniciando busca Api ViaCEP: ", cep);
+>>>>>>> 996dbd642f3f52aede412ceefcb568ea416f67e5
         const response = await axios_1.default.get(`https://viacep.com.br/ws/${cep}/json/`);
+        console.log("Resultado ViaCEP: ", response.data);
         if (response.data.erro) {
             console.warn("CEP não encontrado.");
             return null;

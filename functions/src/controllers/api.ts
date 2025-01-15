@@ -5,6 +5,9 @@ import postUser from "../services/firebase/postUser";
 import { checkEmailExists } from "../services/firebase/checkEmail";
 import postOrder from "../services/hiper/postOrder";
 import fetchCEP from "../services/others/fetchCEP";
+import fetchAdminOrderCompleted from "../services/chat4sales/push/adminOrderCompleted";
+import fetchPaymentLinkAdded from "../services/chat4sales/push/paymentLinkAdded";
+import fetchOrderCompleted from "../services/chat4sales/push/orderCompleted";
 
 // Types
 interface ProductQuery {
@@ -294,13 +297,11 @@ export class CEPController {
     }
 
     try {
-      console.log("CEP que será buscado: ", cep);
       const resultCEP = await fetchCEP(cep);
-      console.log("Resultado ViaCEP: ", resultCEP);
 
       if (resultCEP === null) {
         return res
-          .status(404)
+          .status(201)
           .json({ success: false, message: "CEP não encontrado." });
       }
 
@@ -345,6 +346,96 @@ export const validateCEP = async (
     return res.status(500).json({ error: "Erro interno do servidor." });
   }
 };
+
+export class PushController {
+  public static async postAdminOrderCompleted(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    const body = req.body;
+    console.log("Body recebido:", req.body);
+    if (!body) {
+      return res.status(400).json({ error: "Corpo da requisição inválido" });
+    }
+
+    try {
+      const resultPush = await fetchAdminOrderCompleted(body);
+      console.log("Resultado retornado após envio do push: ", resultPush?.data);
+      res.status(201).json({
+        success: true,
+        message: "Push enviado com sucesso",
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: "Erro ao enviar push",
+      });
+
+      next(error);
+    }
+  }
+
+  public static async postOrderCompleted(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    const body = req.body;
+    console.log("Body recebido:", req.body);
+    if (!body) {
+      return res
+        .status(400)
+        .json({ error: "Corpo da requisição é obrigatório" });
+    }
+
+    try {
+      const resultPush = await fetchOrderCompleted(body);
+      console.log("Resultado retornado após envio do push: ", resultPush);
+      res.status(201).json({
+        success: true,
+        message: "Push enviado com sucesso",
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: "Erro ao enviar push",
+      });
+
+      next(error);
+    }
+  }
+
+  public static async postPaymentLinkAdded(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    const body = req.body;
+    console.log("Body recebido:", req.body);
+    if (!body) {
+      return res
+        .status(400)
+        .json({ error: "Corpo da requisição é obrigatório" });
+    }
+
+    try {
+      const resultPush = await fetchPaymentLinkAdded(body);
+      console.log("Resultado retornado após envio do push: ", resultPush);
+      res.status(201).json({
+        success: true,
+        message: "Push enviado com sucesso",
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: "Erro ao enviar push",
+      });
+
+      next(error);
+    }
+  }
+}
 
 // Error Handler Middleware
 export const errorHandler = (

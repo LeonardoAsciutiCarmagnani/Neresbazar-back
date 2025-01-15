@@ -3,13 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.errorHandler = exports.validateCEP = exports.CEPController = exports.OrderController = exports.UserController = exports.ProductController = void 0;
+exports.errorHandler = exports.PushController = exports.validateCEP = exports.CEPController = exports.OrderController = exports.UserController = exports.ProductController = void 0;
 const zod_1 = require("zod");
 const fetchProducts_1 = require("../services/hiper/fetchProducts");
 const postUser_1 = __importDefault(require("../services/firebase/postUser"));
 const checkEmail_1 = require("../services/firebase/checkEmail");
 const postOrder_1 = __importDefault(require("../services/hiper/postOrder"));
 const fetchCEP_1 = __importDefault(require("../services/others/fetchCEP"));
+const adminOrderCompleted_1 = __importDefault(require("../services/chat4sales/push/adminOrderCompleted"));
 // Schemas
 const createUserSchema = zod_1.z.object({
     user_id: zod_1.z.string(),
@@ -26,6 +27,11 @@ const createUserSchema = zod_1.z.object({
     logradouro: zod_1.z.string().min(1, "Logradouro inválido"),
     uf: zod_1.z.string().min(1, "UF inválida"),
     type_user: zod_1.z.string().min(1, "Tipo de usuário é obrigatório"),
+});
+const adminOrderPushSchema = zod_1.z.object({
+    orderCode: zod_1.z.string(),
+    phoneNumber: zod_1.z.number(),
+    totalValue: zod_1.z.number(),
 });
 // Controllers
 class ProductController {
@@ -201,12 +207,10 @@ class CEPController {
             return res.status(400).json({ error: "CEP é obrigatório." });
         }
         try {
-            console.log("CEP que será buscado: ", cep);
             const resultCEP = await (0, fetchCEP_1.default)(cep);
-            console.log("Resultado ViaCEP: ", resultCEP);
             if (resultCEP === null) {
                 return res
-                    .status(404)
+                    .status(201)
                     .json({ success: false, message: "CEP não encontrado." });
             }
             res.status(201).json({
@@ -244,6 +248,33 @@ const validateCEP = async (req, res, next) => {
     }
 };
 exports.validateCEP = validateCEP;
+class PushController {
+    static async postAdminOrderCompleted(req, res, next) {
+        const body = req.body;
+        console.log("Body recebido:", req.body);
+        if (!body) {
+            return res
+                .status(400)
+                .json({ error: "Corpo da requisição é obrigatório" });
+        }
+        try {
+            const resultPush = await (0, adminOrderCompleted_1.default)(body);
+            console.log("Resultado retornado após envio do push: ", resultPush);
+            res.status(201).json({
+                success: true,
+                message: "Push enviado com sucesso",
+            });
+        }
+        catch (error) {
+            res.status(400).json({
+                success: false,
+                message: "Erro ao enviar push",
+            });
+            next(error);
+        }
+    }
+}
+exports.PushController = PushController;
 // Error Handler Middleware
 const errorHandler = (err, req, res, next) => {
     console.error("Error Handler:", err);

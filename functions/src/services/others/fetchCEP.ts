@@ -10,8 +10,9 @@ interface CepData {
 
 const fetchCEP = async (cep: string): Promise<CepData | null> => {
   try {
+    console.log("Iniciando busca Api ViaCEP: ", cep);
     const response = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
-
+    console.log("Resultado ViaCEP: ", response.data);
     if (response.data.erro) {
       console.warn("CEP não encontrado.");
       return null;

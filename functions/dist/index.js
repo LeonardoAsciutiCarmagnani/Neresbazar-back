@@ -64,6 +64,7 @@ class App {
         router.post("/check-email", api_1.UserController.checkEmail);
         router.post("/post-order", api_1.OrderController.postOrderSale);
         router.post("/find-CEP", api_1.CEPController.getCEP);
+        router.post("/push/admin/order-completed", api_1.PushController.postAdminOrderCompleted);
         // Health check route
         router.get("/health", (_, res) => {
             res

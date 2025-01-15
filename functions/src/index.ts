@@ -5,6 +5,7 @@ import {
   CEPController,
   OrderController,
   ProductController,
+  PushController,
   UserController,
   errorHandler,
 } from "./controllers/api";
@@ -79,6 +80,15 @@ class App {
     router.post("/check-email", UserController.checkEmail);
     router.post("/post-order", OrderController.postOrderSale);
     router.post("/find-CEP", CEPController.getCEP);
+    router.post("/push/order-completed", PushController.postOrderCompleted);
+    router.post(
+      "/push/admin/order-completed",
+      PushController.postAdminOrderCompleted
+    );
+    router.post(
+      "/push/payment-link-added",
+      PushController.postPaymentLinkAdded
+    );
 
     // Health check route
     router.get("/health", (_, res) => {

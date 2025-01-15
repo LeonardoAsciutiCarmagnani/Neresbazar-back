@@ -69,10 +69,12 @@ const fetchOrderSaleData = async (generatedId: string) => {
 const postOrderSale = async (orderData: any, userId: string): Promise<any> => {
   let token = await fetchToken();
 
+  console.log("OrderData: ", orderData);
+
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
-
   try {
+    console.log("tentando enviar os dados para a hiper");
     const response = await axios.post(
       "http://ms-ecommerce.hiper.com.br/api/v1/pedido-de-venda/",
       orderData,

@@ -21,7 +21,7 @@ const createUserSchema = z.object({
   CEP: z.string().min(8, "CEP inválido"),
   numberHouse: z.string().min(1, "Número da casa inválido"),
   phoneNumber: z.string().min(11, "Telefone inválido"),
-  IBGE: z.string().min(7, "Código IBGE inválido"),
+  IBGE: z.number().min(7, "Código IBGE inválido"),
   bairro: z.string().min(1, "Bairro inválido"),
   localidade: z.string().min(1, "Cidade inválida"),
   logradouro: z.string().min(1, "Logradouro inválido"),
@@ -159,6 +159,51 @@ export class UserController {
   }
 }
 
+interface OrderData {
+  IdClient: string;
+  cliente: {
+    documento: string;
+    email: string;
+    inscricaoEstadual?: string;
+    nomeDoCliente: string;
+    nomeFantasia?: string;
+  };
+  enderecoDeCobranca: {
+    bairro: string;
+    cep: string;
+    codigoIbge: number;
+    complemento?: string;
+    logradouro: string;
+    numero: string;
+  };
+  enderecoDeEntrega: {
+    bairro: string;
+    cep: string;
+    codigoIbge: number;
+    complemento: string;
+    logradouro: string;
+    numero: string;
+  };
+  itens: [
+    {
+      produtoId: string;
+      quantidade: number;
+      precoUnitarioBruto: number;
+      precoUnitarioLiquido: number;
+    }
+  ];
+  meiosDePagamento: [
+    {
+      idMeioDePagamento: number;
+      parcelas: number;
+      valor: number;
+    }
+  ];
+  numeroPedidoDeVenda: string;
+  observacaoDoPedidoDeVenda: string;
+  valorDoFrete: number;
+}
+
 export class OrderController {
   public static async postOrderSale(
     req: Request,
@@ -166,14 +211,64 @@ export class OrderController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const orderData = req.body;
-      const userId = orderData.id_user;
+      const orderData: OrderData = req.body;
+      const userId = orderData.IdClient;
+      console.log("Valor em userId: ", userId);
 
-      console.log("Venda que será enviada ao Hiper: ", orderData);
+      const {
+        cliente,
+        enderecoDeCobranca,
+        enderecoDeEntrega,
+        itens,
+        meiosDePagamento,
+        numeroPedidoDeVenda,
+        observacaoDoPedidoDeVenda,
+        valorDoFrete,
+      } = orderData;
 
-      // const result = await postOrder(orderData, userId);
+      const adjustedItens = itens.map((item) => ({
+        produtoId: item.produtoId,
+        quantidade: item.quantidade,
+        precoUnitarioBruto: item.precoUnitarioBruto,
+        precoUnitarioLiquido: item.precoUnitarioLiquido,
+      }));
 
-      // console.log(result);
+      const dataForHiper = {
+        cliente: {
+          documento: cliente.documento,
+          email: cliente.email,
+          inscricaoEstadual: cliente.inscricaoEstadual || "",
+          nomeDoCliente: cliente.nomeDoCliente,
+          nomeFantasia: cliente.nomeFantasia || "",
+        },
+        enderecoDeCobranca: {
+          bairro: enderecoDeCobranca.bairro,
+          cep: enderecoDeCobranca.cep,
+          codigoIbge: enderecoDeCobranca.codigoIbge,
+          complemento: enderecoDeCobranca.complemento || "",
+          logradouro: enderecoDeCobranca.logradouro,
+          numero: enderecoDeCobranca.numero,
+        },
+        enderecoDeEntrega: {
+          bairro: enderecoDeEntrega.bairro,
+          cep: enderecoDeEntrega.cep,
+          codigoIbge: enderecoDeEntrega.codigoIbge,
+          complemento: enderecoDeEntrega.complemento || "",
+          logradouro: enderecoDeEntrega.logradouro,
+          numero: enderecoDeEntrega.numero,
+        },
+        itens: adjustedItens,
+        meiosDePagamento,
+        numeroPedidoDeVenda: numeroPedidoDeVenda || "",
+        observacaoDoPedidoDeVenda: observacaoDoPedidoDeVenda || "",
+        valorDoFrete: valorDoFrete || 0,
+      };
+
+      console.log("Venda que será enviada ao Hiper: ", dataForHiper);
+
+      const result = await postOrder(dataForHiper, userId);
+
+      console.log("result: ", result);
 
       res.status(201).json({
         success: true,

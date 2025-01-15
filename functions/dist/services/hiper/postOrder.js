@@ -54,8 +54,10 @@ const fetchOrderSaleData = async (generatedId) => {
 };
 const postOrderSale = async (orderData, userId) => {
     let token = await (0, fetchToken_1.fetchToken)();
+    console.log("OrderData: ", orderData);
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     try {
+        console.log("tentando enviar os dados para a hiper");
         const response = await axios_1.default.post("http://ms-ecommerce.hiper.com.br/api/v1/pedido-de-venda/", orderData, {
             headers: {
                 Authorization: `Bearer ${token}`,

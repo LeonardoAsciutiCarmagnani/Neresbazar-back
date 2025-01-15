@@ -8,6 +8,7 @@ const zod_1 = require("zod");
 const fetchProducts_1 = require("../services/hiper/fetchProducts");
 const postUser_1 = __importDefault(require("../services/firebase/postUser"));
 const checkEmail_1 = require("../services/firebase/checkEmail");
+const postOrder_1 = __importDefault(require("../services/hiper/postOrder"));
 const fetchCEP_1 = __importDefault(require("../services/others/fetchCEP"));
 // Schemas
 const createUserSchema = zod_1.z.object({
@@ -19,7 +20,7 @@ const createUserSchema = zod_1.z.object({
     CEP: zod_1.z.string().min(8, "CEP inválido"),
     numberHouse: zod_1.z.string().min(1, "Número da casa inválido"),
     phoneNumber: zod_1.z.string().min(11, "Telefone inválido"),
-    IBGE: zod_1.z.string().min(7, "Código IBGE inválido"),
+    IBGE: zod_1.z.number().min(7, "Código IBGE inválido"),
     bairro: zod_1.z.string().min(1, "Bairro inválido"),
     localidade: zod_1.z.string().min(1, "Cidade inválida"),
     logradouro: zod_1.z.string().min(1, "Logradouro inválido"),
@@ -135,10 +136,48 @@ class OrderController {
     static async postOrderSale(req, res, next) {
         try {
             const orderData = req.body;
-            const userId = orderData.id_user;
-            console.log("Venda que será enviada ao Hiper: ", orderData);
-            // const result = await postOrder(orderData, userId);
-            // console.log(result);
+            const userId = orderData.IdClient;
+            console.log("Valor em userId: ", userId);
+            const { cliente, enderecoDeCobranca, enderecoDeEntrega, itens, meiosDePagamento, numeroPedidoDeVenda, observacaoDoPedidoDeVenda, valorDoFrete, } = orderData;
+            const adjustedItens = itens.map((item) => ({
+                produtoId: item.produtoId,
+                quantidade: item.quantidade,
+                precoUnitarioBruto: item.precoUnitarioBruto,
+                precoUnitarioLiquido: item.precoUnitarioLiquido,
+            }));
+            const dataForHiper = {
+                cliente: {
+                    documento: cliente.documento,
+                    email: cliente.email,
+                    inscricaoEstadual: cliente.inscricaoEstadual || "",
+                    nomeDoCliente: cliente.nomeDoCliente,
+                    nomeFantasia: cliente.nomeFantasia || "",
+                },
+                enderecoDeCobranca: {
+                    bairro: enderecoDeCobranca.bairro,
+                    cep: enderecoDeCobranca.cep,
+                    codigoIbge: enderecoDeCobranca.codigoIbge,
+                    complemento: enderecoDeCobranca.complemento || "",
+                    logradouro: enderecoDeCobranca.logradouro,
+                    numero: enderecoDeCobranca.numero,
+                },
+                enderecoDeEntrega: {
+                    bairro: enderecoDeEntrega.bairro,
+                    cep: enderecoDeEntrega.cep,
+                    codigoIbge: enderecoDeEntrega.codigoIbge,
+                    complemento: enderecoDeEntrega.complemento || "",
+                    logradouro: enderecoDeEntrega.logradouro,
+                    numero: enderecoDeEntrega.numero,
+                },
+                itens: adjustedItens,
+                meiosDePagamento,
+                numeroPedidoDeVenda: numeroPedidoDeVenda || "",
+                observacaoDoPedidoDeVenda: observacaoDoPedidoDeVenda || "",
+                valorDoFrete: valorDoFrete || 0,
+            };
+            console.log("Venda que será enviada ao Hiper: ", dataForHiper);
+            const result = await (0, postOrder_1.default)(dataForHiper, userId);
+            console.log("result: ", result);
             res.status(201).json({
                 success: true,
                 message: "Venda enviada com sucesso",

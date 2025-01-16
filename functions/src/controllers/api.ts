@@ -343,7 +343,7 @@ export class PushController {
 
     try {
       const resultPush = await fetchOrderCompleted(body);
-      console.log("Resultado retornado após envio do push: ", resultPush);
+      console.log("Resultado retornado após envio do push: ", resultPush?.data);
       res.status(201).json({
         success: true,
         message: "Push enviado com sucesso",
@@ -373,7 +373,7 @@ export class PushController {
 
     try {
       const resultPush = await fetchPaymentLinkAdded(body);
-      console.log("Resultado retornado após envio do push: ", resultPush);
+      console.log("Resultado retornado após envio do push: ", resultPush?.data);
       res.status(201).json({
         success: true,
         message: "Push enviado com sucesso",

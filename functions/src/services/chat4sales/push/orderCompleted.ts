@@ -13,8 +13,6 @@ const fetchOrderCompleted = async (props: orderCompletedProps) => {
       "https://enterprise-112api.chat4sales.com.br/w/42d9bc92-b7d2-46cd-8b24-4f029708116a",
       props
     );
-    console.log("Resposta chat4Sales ", response);
-
     return response;
   } catch (error) {
     console.error("Erro ao enviar push:", error);

@@ -4,6 +4,7 @@ interface paymentLinkAddedProps {
   orderCode: string;
   customerName: string;
   phoneNumber: number;
+  paymentLink: string;
 }
 
 const fetchPaymentLinkAdded = async (props: paymentLinkAddedProps) => {
@@ -13,8 +14,6 @@ const fetchPaymentLinkAdded = async (props: paymentLinkAddedProps) => {
       "https://enterprise-112api.chat4sales.com.br/w/f72a077a-801d-4235-94e7-a2b0a0873d46",
       props
     );
-    console.log("Resposta chat4Sales ", response);
-
     return response;
   } catch (error) {
     console.error("Erro ao enviar push:", error);

@@ -92,9 +92,14 @@ class App {
 
     // Health check route
     router.get("/health", (_, res) => {
-      res
-        .status(200)
-        .json({ status: "ok", timestamp: new Date().toISOString() });
+      const agora = new Date();
+      const dataHoraCorreta =
+        agora
+          .toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+          .replace(/\//g, "-")
+          .replace(/, /g, "T")
+          .replace(" ", "") + "Z";
+      res.status(200).json({ status: "ok", timestamp: dataHoraCorreta });
     });
 
     // Apply routes with version prefix
